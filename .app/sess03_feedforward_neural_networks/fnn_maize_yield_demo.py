@@ -1,10 +1,32 @@
 """
 =================================================================================================
-Python script to demonstrates FeedForward Neural Network for Maize yield prediction
+Python script to demonstrate FeedForward Neural Network for Maize yield prediction
 =================================================================================================
 This program demonstrates how rainfall and temperature data can be used to predict maize Yield
 using a Feedforward Neural Network.
 
+Machine Learning Workflow:
+
+1. Load maize dataset
+2. Validate dataset structure
+3. Perform exploratory analysis
+4. Prepare features and target
+5. Split data into training, validation and testing datasets
+6. Scale feature values
+7. Train Feedforward Neural Network
+8. Evaluate performance
+9. Generate predictions
+10. Visualise results
+11. Save output figures
+
+Input:
+files/rainfall_temp_vs_yield.csv
+
+Outputs:
+results/correlation_matrix.png
+results/training_history.png
+results/actual_vs_predicted.png
+results/residual_plot.png
 
 Requirements:
     !pip install numpy matplotlib pandas seaborn scikit-learn
