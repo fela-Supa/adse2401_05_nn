@@ -99,7 +99,7 @@ FEATURE_COLUMNS: list[str] = [
     "study_hours_week",
 ]
 
-TARGET_COLUMNS: str = "pass_fail"
+TARGET_COLUMN: str = "pass_fail"
 
 # ---------------------------------------------------------------
 # 2. Utility Functions
@@ -161,7 +161,7 @@ def validate_dataset(dataset: pd.DataFrame) -> None:
 def display_dataset_information(dataset: pd.DataFrame) -> None:
     print("\n---- STUDENT DATASET INFORMATION ----")
     print(f"Shape: {dataset.shape[0]} rows, {dataset.shape[1]} columns")
-    print(f"Column Data Types: {dataset.types}")
+    print(f"Column Data Types: {dataset.dtypes}")
     print(f"First 5 records:\n{dataset.head(5)}")
 
 
@@ -197,12 +197,13 @@ def plot_correlation_heatmap(dataset: pd.DataFrame) -> None:
         plt.savefig(RESULTS_DIR / "student_performance_correlation_heatmap.png")
         plt.close()
     except Exception as e:
-        raise RuntimeError(f"Failed to save correlation heatmap: {e} from e")
+        raise RuntimeError(f"Failed to save correlation heatmap: {e}")from e
 
 def plot_training_history(history: tf.keras.callbacks.History) -> None:
     try:
         plt.figure(figsize=(8 ,7))
         plt.plot(history.history['accuracy'], label="Training Accuracy")
+        plt.plot(history.history['val_accuracy'], label="Validation Accuracy")
         plt.title("Model training History")
         plt.xlabel("Epoch")
         plt.ylabel("Accuracy")
@@ -267,21 +268,22 @@ def display_prediction_examples(
 # -----------------------------------------------------------------------------
 # 7. Preprocessing Functions
 # -----------------------------------------------------------------------------
-def  select_features_and_target(dataset: pd.DataFrame) -> Tuple[pd.DataFrame, pd.Series]:
+def  select_features_and_target(dataset: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
 
     features = dataset[FEATURE_COLUMNS].copy()
-    target = dataset[TARGET_COLUMNS].copy()
+    target = dataset[TARGET_COLUMN].copy()
     return features, target
 
-def scale_features(features: pd.DataFrame) -> tuple[np.ndarray, StandardScaler]:
+def scale_features(x_train: np.ndarray, x_test: np.ndarray) -> tuple[np.ndarray, np.ndarray, StandardScaler]:
 
     scaler = StandardScaler()
-    scaled_features = scaler.fit_transform(features)
-    return scaled_features, scaler
+    x_train = scaler.fit_transform(x_train)
+    x_test = scaler.transform(x_test)
+    return x_train, x_test, scaler
 
 def split_dataset(
         features: np.ndarray,
-        target: np.pd.Series,
+        target: pd.Series,
         student_ids: pd.Series,
 ) -> tuple[np.ndarray, np.ndarray, pd.Series, pd.Series, pd.Series, pd.Series]:
 
@@ -443,17 +445,17 @@ def main() -> None:
         plot_correlation_heatmap(dataset)
 
         features, target = select_features_and_target(dataset)
-        scaled_features, scaler = scale_features(features)
-
         x_train, x_test, y_train, y_test, id_train, id_test = split_dataset(
-            scaled_features, target, dataset["student_id"]
+            features, target, dataset["student_id"]
         )
+
+        x_train, x_test, scaler = scale_features(x_train, x_test)
 
         model = build_neural_network(input_dimension=x_train.shape[1])
         history = train_model(model, x_train, y_train)
         plot_training_history(history)
 
-        predictions, probabilities, accuracy = evaluate_model(model, x_test, y_test)
+        accuracy, probabilities, predictions = evaluate_model(model, x_test, y_test)
         plot_confusion_matrix(y_test.to_numpy(),predictions)
 
         predict_student_outcomes(model, x_test)
